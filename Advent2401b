@@ -1,0 +1,115 @@
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. ADVENT2401B.
+      *-----------------------------------------------------------------
+      * THIS PROGRAM TAKES TWO LISTS OF NUMBERS AND OUTPUTS THE 
+      * SIMILARITY OF BOTH AS DEFINED AS THE MULTIPLICATION OF THE 
+      * NUMBER ON THE LEFT LIST TIMES THE NUMBER OF TIMES ITS ON THE
+      * RIGHT LIST AND ALL THOSE PRODUCTS SUMMED TOGETHER.
+      *-----------------------------------------------------------------
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+           SELECT OPTIONAL ADVENT-FILE
+               ASSIGN TO "Advent2401.dat"
+               FILE STATUS IS WS-FILE-STATUS-A
+               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OPTIONAL LEFT-FILE
+               ASSIGN TO "Advent2401Left.dat"
+               FILE STATUS IS WS-FILE-STATUS-L
+               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT OPTIONAL RIGHT-FILE
+               ASSIGN TO "Advent2401Right.dat"
+               FILE STATUS IS WS-FILE-STATUS-R
+               ORGANIZATION IS LINE SEQUENTIAL.
+           SELECT WORK-FILE ASSIGN TO SORT-WORK.
+       
+       DATA DIVISION.
+       FILE SECTION.
+       FD  ADVENT-FILE
+           LABEL RECORDS ARE STANDARD.
+       01  LIST-RECORD.
+           05 LIST-LEFT  PIC X(5).
+           05 LIST-SPACE PIC X(3).
+           05 LIST-RIGHT PIC X(5).
+       SD  WORK-FILE
+           LABEL RECORDS ARE STANDARD.
+       01  LIST-RECORD-W.
+           05 LIST-LEFT-W  PIC X(5).
+           05 LIST-SPACE-W PIC X(3).
+           05 LIST-RIGHT-W PIC X(5).
+       FD  LEFT-FILE
+           LABEL RECORDS ARE STANDARD.
+       01  LIST-RECORD-L.
+           05 LIST-LEFT-L  PIC X(5).
+           05 LIST-SPACE-L PIC X(3).
+           05 LIST-RIGHT-L PIC X(5).
+       FD  RIGHT-FILE
+           LABEL RECORDS ARE STANDARD.
+       01  LIST-RECORD-R.
+           05 LIST-LEFT-R  PIC X(5).
+           05 LIST-SPACE-R PIC X(3).
+           05 LIST-RIGHT-R PIC X(5).
+
+       WORKING-STORAGE SECTION.
+       01  WS-LEFT-LIST     PIC X(5).
+       01  WS-RIGHT-LIST    PIC X(5).
+       01  AMOUNT-LEFT      PIC 9(5).
+       01  AMOUNT-RIGHT     PIC 9(5).
+       01  AMOUNT-TOTAL     PIC 9(15).
+       01  WS-RIGHT-LIST    PIC X(5).
+       01  WS-FILE-STATUS-A PIC X(2).
+       01  WS-FILE-STATUS-L PIC X(2).
+       01  WS-FILE-STATUS-R PIC X(2).
+       01  WS-FILE-STATUS-W PIC X(2).  
+       01  IDX01            PIC 9(4).  
+       01  IDX02            PIC 9(4).  
+       01  SIMILARITY-COUNT PIC 9(4).
+       01  TOTAL-SIMILARITY PIC 9(10) VALUE 0.
+       01  WS-NUMBER-COUNT-LEFT.
+           05 WS-NCT-LEFT   PIC 9(5) OCCURS 1000 TIMES.
+       01  WS-NUMBER-COUNT-RIGHT.
+           05 WS-NCT-RIGHT  PIC 9(5) OCCURS 1000 TIMES.
+
+
+       PROCEDURE DIVISION.
+
+       PROGRAM-BEGIN.
+           SORT WORK-FILE
+           ON ASCENDING KEY LIST-LEFT-W
+           WITH DUPLICATES IN ORDER
+           USING ADVENT-FILE GIVING LEFT-FILE.
+           SORT WORK-FILE
+           ON ASCENDING KEY LIST-RIGHT-W
+           WITH DUPLICATES IN ORDER
+           USING ADVENT-FILE GIVING RIGHT-FILE.
+           CLOSE LEFT-FILE.
+           CLOSE RIGHT-FILE.
+           OPEN INPUT LEFT-FILE.
+           OPEN INPUT RIGHT-FILE.
+           PERFORM VARYING IDX01 FROM 1 BY 1 UNTIL IDX01 = 1001
+               READ LEFT-FILE NEXT RECORD
+               READ RIGHT-FILE NEXT RECORD
+               MOVE LIST-LEFT-L TO WS-NCT-LEFT(IDX01)
+               MOVE LIST-RIGHT-R TO WS-NCT-RIGHT(IDX01)
+           END-PERFORM.
+           CLOSE LEFT-FILE.
+           CLOSE RIGHT-FILE.
+           SORT WS-NCT-LEFT ASCENDING WS-NCT-LEFT.
+           SORT WS-NCT-RIGHT ASCENDING WS-NCT-RIGHT.
+           PERFORM VARYING IDX01 FROM 1 BY 1 UNTIL IDX01 = 1001
+               MOVE 0 TO SIMILARITY-COUNT
+               PERFORM VARYING IDX02 FROM 1 BY 1 UNTIL IDX02 = 1001
+                  IF WS-NCT-LEFT(IDX01) = WS-NCT-RIGHT(IDX02) THEN
+                  COMPUTE SIMILARITY-COUNT = SIMILARITY-COUNT + 1
+                  END-IF
+                  IF IDX02 = 1000 THEN
+                  COMPUTE TOTAL-SIMILARITY = TOTAL-SIMILARITY +
+                  (WS-NCT-LEFT(IDX01) * SIMILARITY-COUNT)
+                  END-IF 
+               END-PERFORM
+           END-PERFORM.
+           DISPLAY TOTAL-SIMILARITY.
+
+       PROGRAM-END.
+           STOP RUN.
+       
